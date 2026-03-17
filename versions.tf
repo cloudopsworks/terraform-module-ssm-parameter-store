@@ -7,11 +7,13 @@
 #     Distributed Under Apache v2.0 License
 #
 
-output "parameters" {
-  value = {
-    for key, param in aws_ssm_parameter.this : key => {
-      name = param.name
-      arn  = param.arn
+terraform {
+  required_version = ">= 1.3"
+  # Complete with required providers for the module
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.4"
     }
   }
 }
