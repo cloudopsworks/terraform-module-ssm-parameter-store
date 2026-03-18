@@ -7,11 +7,7 @@
 #     Distributed Under Apache v2.0 License
 #
 
-output "parameters" {
-  value = {
-    for key, param in aws_ssm_parameter.this : key => {
-      name = param.name
-      arn  = param.arn
-    }
-  }
+data "aws_kms_alias" "this" {
+  count = try(var.settings.encryption.kms_key_alias, "") != "" ? 1 : 0
+  name  = var.settings.encryption.kms_key_alias
 }

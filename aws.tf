@@ -7,11 +7,4 @@
 #     Distributed Under Apache v2.0 License
 #
 
-output "parameters" {
-  value = {
-    for key, param in aws_ssm_parameter.this : key => {
-      name = param.name
-      arn  = param.arn
-    }
-  }
-}
+data "aws_region" "current" {}
