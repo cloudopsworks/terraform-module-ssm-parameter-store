@@ -10,10 +10,14 @@
 
 [![cloudopsworks][logo]](https://cloudopsworks.co/)
 
-# Terraform Transit Gateway Module
+# Terraform AWS SSM Parameter Store Module
+
+ [![Latest Release](https://img.shields.io/github/release/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases/latest) [![Last Updated](https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/commits)
 
 
-VPC Module for setting up transit gateway with ResourceAccessMananger support.
+Terraform module for creating and managing AWS SSM Parameter Store parameters with support for
+hierarchical path naming, KMS encryption (SecureString), per-parameter and global key configuration,
+and full organizational tagging integration.
 
 
 ---
@@ -43,25 +47,292 @@ We have [*lots of terraform modules*][terraform_modules] that are Open Source an
 
 ## Introduction
 
+This module manages one or more AWS SSM Parameter Store entries under a consistent, organization-driven
+hierarchical naming convention. The full parameter path is automatically constructed as:
 
+    /<org_unit>/<env_name>/<env_type>/<name>
+
+For example, an `org_unit` of `devops`, `env_name` of `prod`, `env_type` of `production`, and
+`name` of `db-password` yields the path `/devops/prod/production/db-password`.
+
+If full control over the path is needed, the `name_override` field bypasses the automatic construction
+and stores the parameter at exactly the path specified.
+
+**Encryption** is supported for `SecureString` type parameters. KMS key resolution follows this priority:
+1. `settings.parameters.<key>.kms_key_id` — per-parameter key ID or ARN
+2. `settings.encryption.kms_key_id` — global key ID or ARN
+3. `settings.encryption.kms_key_alias` — global KMS alias resolved to a key ID via AWS data source
+
+`String` and `StringList` parameters are never encrypted regardless of the encryption block.
+
+All parameters are tagged using the organizational context (via the `cloudopsworks/tags/local` module)
+merged with any `extra_tags` defined at the module or per-parameter level.
 
 ## Usage
 
 
 **IMPORTANT:** The `master` branch is used in `source` just as an example. In your code, do not pin to `master` because there may be breaking changes between releases.
-Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-aws-vpc-setup/releases).
+Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases).
 
 
+## Variables
 
+| Variable     | Type     | Required | Description |
+|--------------|----------|----------|-------------|
+| `org`        | object   | Yes      | Organization context used for naming and tagging |
+| `settings`   | any      | No       | SSM parameters and encryption configuration (see structure below) |
+| `is_hub`     | bool     | No       | Whether this is a hub deployment. Default: `false` |
+| `spoke_def`  | string   | No       | 3-digit spoke identifier. Default: `"001"` |
+| `extra_tags` | map(string) | No    | Additional tags applied to all resources. Default: `{}` |
+
+### `org` Variable Structure
+
+```yaml
+org:
+  organization_name: "mycompany"   # (Required) Name of the organization
+  organization_unit: "devops"      # (Required) Organizational unit (used in parameter path prefix)
+  environment_type: "production"   # (Required) Environment type (e.g. production, staging, development)
+  environment_name: "prod"         # (Required) Short environment name (e.g. prod, stg, dev)
+```
+
+### `settings` Variable Structure
+
+```yaml
+settings:                                     # (Optional) Root configuration block. Default: {}
+  parameters:                                 # (Optional) Map of SSM parameters to create. Default: {}
+    <key>:                                    # (Required) Unique internal key for this parameter entry.
+      name: "my-param"                        # (Required) Parameter name segment. Path becomes /<org_unit>/<env_name>/<env_type>/<name>
+      name_override: ""                       # (Optional) Full SSM path override. Bypasses automatic path construction. Default: ""
+      description: "My parameter"             # (Optional) Parameter description. Default: "Default parameter for <resolved-name>"
+      type: "String"                          # (Optional) Parameter type. Possible values: "String", "StringList", "SecureString". Default: "String"
+      value: "my-value"                       # (Required) The value to store.
+      allowed_pattern: ".*"                   # (Optional) Regex pattern for value validation. Default: null
+      overwrite: false                        # (Optional) Overwrite if the parameter already exists. Default: false
+      tier: "Standard"                        # (Optional) Storage tier: "Standard", "Advanced", "Intelligent-Tiering". Default: null
+      data_type: "text"                       # (Optional) Data type: "text" or "aws:ec2:image". Default: null
+      kms_key_id: ""                          # (Optional) Per-parameter KMS key ID/ARN for SecureString. Overrides global encryption. Default: null
+      extra_tags:                             # (Optional) Additional tags for this parameter. Default: {}
+        Tag1: "Value1"
+  encryption:                                 # (Optional) Global KMS encryption settings for SecureString parameters. Default: {}
+    kms_key_alias: "alias/my-key"             # (Optional) KMS alias resolved to a key ID. Example: "alias/aws/ssm". Default: ""
+    kms_key_id: ""                            # (Optional) Global KMS key ID or ARN. Overridden by per-parameter kms_key_id. Default: ""
+```
+
+### Terragrunt Usage
+
+```hcl
+# terragrunt.hcl
+terraform {
+  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+}
+
+inputs = {
+  org = {
+    organization_name = "mycompany"
+    organization_unit = "devops"
+    environment_type  = "production"
+    environment_name  = "prod"
+  }
+
+  extra_tags = {
+    ManagedBy = "Terragrunt"
+    Team      = "Platform"
+  }
+
+  settings = {
+    encryption = {
+      kms_key_alias = "alias/aws/ssm"
+    }
+    parameters = {
+      app_config = {
+        name        = "app-config-url"
+        type        = "String"
+        value       = "https://config.internal/app"
+        description = "Application configuration service URL"
+        overwrite   = true
+      }
+      db_password = {
+        name        = "db-password"
+        type        = "SecureString"
+        value       = "s3cr3t!"
+        description = "Database master password"
+        tier        = "Standard"
+        overwrite   = true
+      }
+    }
+  }
+}
+```
 
 ## Quick Start
 
+1. Reference the module in your Terragrunt configuration:
 
+```hcl
+# terragrunt.hcl
+terraform {
+  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+}
+
+inputs = {
+  org = {
+    organization_name = "myorg"
+    organization_unit = "ops"
+    environment_type  = "development"
+    environment_name  = "dev"
+  }
+
+  settings = {
+    parameters = {
+      hello = {
+        name  = "hello-world"
+        type  = "String"
+        value = "Hello from SSM!"
+      }
+    }
+  }
+}
+```
+
+2. Initialize and apply:
+
+```bash
+terragrunt init
+terragrunt apply
+```
+
+The parameter will be available at `/ops/dev/development/hello-world` in AWS SSM Parameter Store.
 
 
 ## Examples
 
+### Example 1: Plain String Parameters
 
+Store simple string configuration values with automatic path construction.
+
+```hcl
+# terragrunt.hcl
+terraform {
+  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+}
+
+inputs = {
+  org = {
+    organization_name = "acme"
+    organization_unit = "platform"
+    environment_type  = "staging"
+    environment_name  = "stg"
+  }
+
+  settings = {
+    parameters = {
+      feature_flag = {
+        name  = "feature-new-ui"
+        type  = "String"
+        value = "enabled"
+      }
+      api_endpoint = {
+        name  = "external-api-endpoint"
+        type  = "String"
+        value = "https://api.example.com/v2"
+      }
+    }
+  }
+}
+```
+
+The parameters will be stored at:
+- `/platform/stg/staging/feature-new-ui`
+- `/platform/stg/staging/external-api-endpoint`
+
+---
+
+### Example 2: SecureString with Global KMS Alias
+
+Encrypt sensitive parameters using a KMS alias shared across all `SecureString` entries.
+
+```hcl
+# terragrunt.hcl
+terraform {
+  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+}
+
+inputs = {
+  org = {
+    organization_name = "acme"
+    organization_unit = "security"
+    environment_type  = "production"
+    environment_name  = "prod"
+  }
+
+  settings = {
+    encryption = {
+      kms_key_alias = "alias/ssm-prod-key"
+    }
+    parameters = {
+      db_password = {
+        name      = "rds-master-password"
+        type      = "SecureString"
+        value     = "Sup3rS3cur3!"
+        overwrite = true
+        tier      = "Standard"
+      }
+      api_secret = {
+        name      = "third-party-api-secret"
+        type      = "SecureString"
+        value     = "sk-abc123xyz"
+        overwrite = true
+      }
+    }
+  }
+}
+```
+
+---
+
+### Example 3: Parameter with Path Override and Per-Parameter KMS Key
+
+Use `name_override` for full path control and a dedicated KMS key for one parameter.
+
+```hcl
+# terragrunt.hcl
+terraform {
+  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+}
+
+inputs = {
+  org = {
+    organization_name = "acme"
+    organization_unit = "infra"
+    environment_type  = "production"
+    environment_name  = "prod"
+  }
+
+  settings = {
+    encryption = {
+      kms_key_alias = "alias/aws/ssm"
+    }
+    parameters = {
+      legacy_token = {
+        name_override = "/legacy/apps/auth-token"
+        type          = "SecureString"
+        value         = "tok_legacy_abc"
+        kms_key_id    = "arn:aws:kms:us-east-1:123456789012:key/mrk-abc123"
+        description   = "Auth token for legacy application — uses dedicated key"
+        overwrite     = true
+      }
+      shared_config = {
+        name  = "shared-timeout"
+        type  = "String"
+        value = "30"
+        extra_tags = {
+          Component = "shared"
+        }
+      }
+    }
+  }
+}
+```
 
 
 
@@ -130,7 +401,7 @@ Available targets:
 
 **Got a question?** We got answers. 
 
-File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-aws-vpc-setup/issues), send us an [email][email] or join our [Slack Community][slack].
+File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/issues), send us an [email][email] or join our [Slack Community][slack].
 
 
 ## DevOps Tools
@@ -146,7 +417,7 @@ File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-aws-vpc-
 
 ### Bug Reports & Feature Requests
 
-Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module-aws-vpc-setup/issues) to report any bugs or file feature requests.
+Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/issues) to report any bugs or file feature requests.
 
 ### Developing
 
@@ -155,7 +426,7 @@ Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module
 
 ## Copyrights
 
-Copyright © 2024-2026 [Cloud Ops Works LLC](https://cloudops.works)
+Copyright © 2025-2026 [Cloud Ops Works LLC](https://cloudopsworks.co)
 
 
 
@@ -213,30 +484,30 @@ This project is maintained by [Cloud Ops Works LLC][website].
 [![Beacon][beacon]][website]
 
   [logo]: https://cloudopsworks.co/images/main-logo.png
-  [docs]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=docs
-  [website]: https://cloudopsworks.co?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=website
-  [github]: https://cloudopsworks.co/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=github
-  [jobs]: https://cloudopsworks.co/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=jobs
-  [hire]: https://cloudopsworks.co/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=hire
-  [slack]: https://cloudopsworks.co/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=slack
-  [linkedin]: https://cloudopsworks.co/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=linkedin
-  [x]: https://cloudopsworks.co/x?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=x
-  [testimonial]: https://cloudopsworks.co/case-studies?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=testimonial
-  [office_hours]: https://cloudopsworks.co/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=office_hours
-  [newsletter]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=newsletter
-  [email]: https://cloudopsworks.co/contact?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=email
-  [commercial_support]: https://cloudopsworks.co/services?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=commercial_support
-  [we_love_open_source]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=we_love_open_source
-  [terraform_modules]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=terraform_modules
+  [docs]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=docs
+  [website]: https://cloudopsworks.co?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=website
+  [github]: https://cloudopsworks.co/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=github
+  [jobs]: https://cloudopsworks.co/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=jobs
+  [hire]: https://cloudopsworks.co/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=hire
+  [slack]: https://cloudopsworks.co/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=slack
+  [linkedin]: https://cloudopsworks.co/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=linkedin
+  [x]: https://cloudopsworks.co/x?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=x
+  [testimonial]: https://cloudopsworks.co/case-studies?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=testimonial
+  [office_hours]: https://cloudopsworks.co/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=office_hours
+  [newsletter]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=newsletter
+  [email]: https://cloudopsworks.co/contact?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=email
+  [commercial_support]: https://cloudopsworks.co/services?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=commercial_support
+  [we_love_open_source]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=we_love_open_source
+  [terraform_modules]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=terraform_modules
   [readme_header_img]: https://cloudopsworks.co/images/readme-header.png
-  [readme_header_link]: https://cloudopsworks.co/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=readme_header_link
+  [readme_header_link]: https://cloudopsworks.co/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_header_link
   [readme_footer_img]: https://cloudopsworks.co/images/main-logo-footer.png
-  [readme_footer_link]: https://cloudopsworks.co/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=readme_footer_link
+  [readme_footer_link]: https://cloudopsworks.co/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_footer_link
   [readme_commercial_support_img]: https://cloudopsworks.co/readme/commercial-support/img
-  [readme_commercial_support_link]: https://cloudopsworks.co/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-vpc-setup&utm_content=readme_commercial_support_link
-  [share_twitter]: https://x.com/intent/tweet/?text=Terraform+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-vpc-setup
-  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+Transit+Gateway+Module&url=https://github.com/cloudopsworks/terraform-module-aws-vpc-setup
-  [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-aws-vpc-setup
-  [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-aws-vpc-setup
-  [share_email]: mailto:?subject=Terraform+Transit+Gateway+Module&body=https://github.com/cloudopsworks/terraform-module-aws-vpc-setup
-  [beacon]: https://ga-beacon.cloudospworks.co/G-QMZVYYN2VN/cloudopsworks/terraform-module-aws-vpc-setup?pixel&cs=github&cm=readme&an=terraform-module-aws-vpc-setup
+  [readme_commercial_support_link]: https://cloudopsworks.co/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_commercial_support_link
+  [share_twitter]: https://x.com/intent/tweet/?text=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
+  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
+  [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
+  [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
+  [share_email]: mailto:?subject=Terraform+AWS+SSM+Parameter+Store+Module&body=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
+  [beacon]: https://ga-beacon.cloudospworks.co/G-QMZVYYN2VN/cloudopsworks/terraform-module-ssm-parameter-store?pixel&cs=github&cm=readme&an=terraform-module-ssm-parameter-store
