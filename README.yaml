@@ -1,30 +1,309 @@
-name: Terraform Transit Gateway Module
+name: Terraform AWS SSM Parameter Store Module
 #logo: logo/logo.jpg
+badges:
+  - name: Latest Release
+    image: https://img.shields.io/github/release/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases/latest
+  - name: Last Updated
+    image: https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/commits
 
 license: "APACHE2"
 
 copyrights:
   - name: "Cloud Ops Works LLC"
-    url: "https://cloudops.works"
-    year: "2024"
+    url: "https://cloudopsworks.co"
+    year: "2025"
 
-github_repo: cloudopsworks/terraform-module-aws-vpc-setup
+github_repo: cloudopsworks/terraform-module-ssm-parameter-store
 
 description: |-
-  VPC Module for setting up transit gateway with ResourceAccessMananger support.
+  Terraform module for creating and managing AWS SSM Parameter Store parameters with support for
+  hierarchical path naming, KMS encryption (SecureString), per-parameter and global key configuration,
+  and full organizational tagging integration.
 
 # Introduction to the project
 introduction: |-
-#  This is an introduction.
+  This module manages one or more AWS SSM Parameter Store entries under a consistent, organization-driven
+  hierarchical naming convention. The full parameter path is automatically constructed as:
+
+      /<org_unit>/<env_name>/<env_type>/<name>
+
+  For example, an `org_unit` of `devops`, `env_name` of `prod`, `env_type` of `production`, and
+  `name` of `db-password` yields the path `/devops/prod/production/db-password`.
+
+  If full control over the path is needed, the `name_override` field bypasses the automatic construction
+  and stores the parameter at exactly the path specified.
+
+  **Encryption** is supported for `SecureString` type parameters. KMS key resolution follows this priority:
+  1. `settings.parameters.<key>.kms_key_id` — per-parameter key ID or ARN
+  2. `settings.encryption.kms_key_id` — global key ID or ARN
+  3. `settings.encryption.kms_key_alias` — global KMS alias resolved to a key ID via AWS data source
+
+  `String` and `StringList` parameters are never encrypted regardless of the encryption block.
+
+  All parameters are tagged using the organizational context (via the `cloudopsworks/tags/local` module)
+  merged with any `extra_tags` defined at the module or per-parameter level.
 
 # How to use this project
 usage: |-
+  ## Variables
+
+  | Variable     | Type     | Required | Description |
+  |--------------|----------|----------|-------------|
+  | `org`        | object   | Yes      | Organization context used for naming and tagging |
+  | `settings`   | any      | No       | SSM parameters and encryption configuration (see structure below) |
+  | `is_hub`     | bool     | No       | Whether this is a hub deployment. Default: `false` |
+  | `spoke_def`  | string   | No       | 3-digit spoke identifier. Default: `"001"` |
+  | `extra_tags` | map(string) | No    | Additional tags applied to all resources. Default: `{}` |
+
+  ### `org` Variable Structure
+
+  ```yaml
+  org:
+    organization_name: "mycompany"   # (Required) Name of the organization
+    organization_unit: "devops"      # (Required) Organizational unit (used in parameter path prefix)
+    environment_type: "production"   # (Required) Environment type (e.g. production, staging, development)
+    environment_name: "prod"         # (Required) Short environment name (e.g. prod, stg, dev)
+  ```
+
+  ### `settings` Variable Structure
+
+  ```yaml
+  settings:                                     # (Optional) Root configuration block. Default: {}
+    parameters:                                 # (Optional) Map of SSM parameters to create. Default: {}
+      <key>:                                    # (Required) Unique internal key for this parameter entry.
+        name: "my-param"                        # (Required) Parameter name segment. Path becomes /<org_unit>/<env_name>/<env_type>/<name>
+        name_override: ""                       # (Optional) Full SSM path override. Bypasses automatic path construction. Default: ""
+        description: "My parameter"             # (Optional) Parameter description. Default: "Default parameter for <resolved-name>"
+        type: "String"                          # (Optional) Parameter type. Possible values: "String", "StringList", "SecureString". Default: "String"
+        value: "my-value"                       # (Required) The value to store.
+        allowed_pattern: ".*"                   # (Optional) Regex pattern for value validation. Default: null
+        overwrite: false                        # (Optional) Overwrite if the parameter already exists. Default: false
+        tier: "Standard"                        # (Optional) Storage tier: "Standard", "Advanced", "Intelligent-Tiering". Default: null
+        data_type: "text"                       # (Optional) Data type: "text" or "aws:ec2:image". Default: null
+        kms_key_id: ""                          # (Optional) Per-parameter KMS key ID/ARN for SecureString. Overrides global encryption. Default: null
+        extra_tags:                             # (Optional) Additional tags for this parameter. Default: {}
+          Tag1: "Value1"
+    encryption:                                 # (Optional) Global KMS encryption settings for SecureString parameters. Default: {}
+      kms_key_alias: "alias/my-key"             # (Optional) KMS alias resolved to a key ID. Example: "alias/aws/ssm". Default: ""
+      kms_key_id: ""                            # (Optional) Global KMS key ID or ARN. Overridden by per-parameter kms_key_id. Default: ""
+  ```
+
+  ### Terragrunt Usage
+
+  ```hcl
+  # terragrunt.hcl
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    org = {
+      organization_name = "mycompany"
+      organization_unit = "devops"
+      environment_type  = "production"
+      environment_name  = "prod"
+    }
+
+    extra_tags = {
+      ManagedBy = "Terragrunt"
+      Team      = "Platform"
+    }
+
+    settings = {
+      encryption = {
+        kms_key_alias = "alias/aws/ssm"
+      }
+      parameters = {
+        app_config = {
+          name        = "app-config-url"
+          type        = "String"
+          value       = "https://config.internal/app"
+          description = "Application configuration service URL"
+          overwrite   = true
+        }
+        db_password = {
+          name        = "db-password"
+          type        = "SecureString"
+          value       = "s3cr3t!"
+          description = "Database master password"
+          tier        = "Standard"
+          overwrite   = true
+        }
+      }
+    }
+  }
+  ```
 
 # Example usage
 examples: |-
+  ### Example 1: Plain String Parameters
+
+  Store simple string configuration values with automatic path construction.
+
+  ```hcl
+  # terragrunt.hcl
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    org = {
+      organization_name = "acme"
+      organization_unit = "platform"
+      environment_type  = "staging"
+      environment_name  = "stg"
+    }
+
+    settings = {
+      parameters = {
+        feature_flag = {
+          name  = "feature-new-ui"
+          type  = "String"
+          value = "enabled"
+        }
+        api_endpoint = {
+          name  = "external-api-endpoint"
+          type  = "String"
+          value = "https://api.example.com/v2"
+        }
+      }
+    }
+  }
+  ```
+
+  The parameters will be stored at:
+  - `/platform/stg/staging/feature-new-ui`
+  - `/platform/stg/staging/external-api-endpoint`
+
+  ---
+
+  ### Example 2: SecureString with Global KMS Alias
+
+  Encrypt sensitive parameters using a KMS alias shared across all `SecureString` entries.
+
+  ```hcl
+  # terragrunt.hcl
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    org = {
+      organization_name = "acme"
+      organization_unit = "security"
+      environment_type  = "production"
+      environment_name  = "prod"
+    }
+
+    settings = {
+      encryption = {
+        kms_key_alias = "alias/ssm-prod-key"
+      }
+      parameters = {
+        db_password = {
+          name      = "rds-master-password"
+          type      = "SecureString"
+          value     = "Sup3rS3cur3!"
+          overwrite = true
+          tier      = "Standard"
+        }
+        api_secret = {
+          name      = "third-party-api-secret"
+          type      = "SecureString"
+          value     = "sk-abc123xyz"
+          overwrite = true
+        }
+      }
+    }
+  }
+  ```
+
+  ---
+
+  ### Example 3: Parameter with Path Override and Per-Parameter KMS Key
+
+  Use `name_override` for full path control and a dedicated KMS key for one parameter.
+
+  ```hcl
+  # terragrunt.hcl
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    org = {
+      organization_name = "acme"
+      organization_unit = "infra"
+      environment_type  = "production"
+      environment_name  = "prod"
+    }
+
+    settings = {
+      encryption = {
+        kms_key_alias = "alias/aws/ssm"
+      }
+      parameters = {
+        legacy_token = {
+          name_override = "/legacy/apps/auth-token"
+          type          = "SecureString"
+          value         = "tok_legacy_abc"
+          kms_key_id    = "arn:aws:kms:us-east-1:123456789012:key/mrk-abc123"
+          description   = "Auth token for legacy application — uses dedicated key"
+          overwrite     = true
+        }
+        shared_config = {
+          name  = "shared-timeout"
+          type  = "String"
+          value = "30"
+          extra_tags = {
+            Component = "shared"
+          }
+        }
+      }
+    }
+  }
+  ```
 
 # How to get started quickly
 quickstart: |-
+  1. Reference the module in your Terragrunt configuration:
+
+  ```hcl
+  # terragrunt.hcl
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    org = {
+      organization_name = "myorg"
+      organization_unit = "ops"
+      environment_type  = "development"
+      environment_name  = "dev"
+    }
+
+    settings = {
+      parameters = {
+        hello = {
+          name  = "hello-world"
+          type  = "String"
+          value = "Hello from SSM!"
+        }
+      }
+    }
+  }
+  ```
+
+  2. Initialize and apply:
+
+  ```bash
+  terragrunt init
+  terragrunt apply
+  ```
+
+  The parameter will be available at `/ops/dev/development/hello-world` in AWS SSM Parameter Store.
 
 include:
   - "docs/targets.md"
