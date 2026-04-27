@@ -2,11 +2,11 @@ name: Terraform AWS SSM Parameter Store Module
 #logo: logo/logo.jpg
 badges:
   - name: Latest Release
-    image: https://img.shields.io/github/release/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge
-    url: https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases/latest
+    image: https://img.shields.io/github/release/cloudopsworks/terraform-module-aws-ssm-parameter-store.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/releases/latest
   - name: Last Updated
-    image: https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge
-    url: https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/commits
+    image: https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-aws-ssm-parameter-store.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/commits
 
 license: "APACHE2"
 
@@ -15,7 +15,7 @@ copyrights:
     url: "https://cloudopsworks.co"
     year: "2025"
 
-github_repo: cloudopsworks/terraform-module-ssm-parameter-store
+github_repo: cloudopsworks/terraform-module-aws-ssm-parameter-store
 
 description: |-
   Terraform module for creating and managing AWS SSM Parameter Store parameters with support for
@@ -95,7 +95,7 @@ usage: |-
   ```hcl
   # terragrunt.hcl
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
   }
 
   inputs = {
@@ -145,7 +145,7 @@ examples: |-
   ```hcl
   # terragrunt.hcl
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
   }
 
   inputs = {
@@ -186,7 +186,7 @@ examples: |-
   ```hcl
   # terragrunt.hcl
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
   }
 
   inputs = {
@@ -229,7 +229,7 @@ examples: |-
   ```hcl
   # terragrunt.hcl
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
   }
 
   inputs = {
@@ -273,7 +273,7 @@ quickstart: |-
   ```hcl
   # terragrunt.hcl
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
   }
 
   inputs = {
