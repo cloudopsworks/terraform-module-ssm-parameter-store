@@ -12,7 +12,7 @@
 
 # Terraform AWS SSM Parameter Store Module
 
- [![Latest Release](https://img.shields.io/github/release/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases/latest) [![Last Updated](https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/commits)
+ [![Latest Release](https://img.shields.io/github/release/cloudopsworks/terraform-module-aws-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/releases/latest) [![Last Updated](https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-aws-ssm-parameter-store.svg?style=for-the-badge)](https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/commits)
 
 
 Terraform module for creating and managing AWS SSM Parameter Store parameters with support for
@@ -72,7 +72,7 @@ merged with any `extra_tags` defined at the module or per-parameter level.
 
 
 **IMPORTANT:** The `master` branch is used in `source` just as an example. In your code, do not pin to `master` because there may be breaking changes between releases.
-Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/releases).
+Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/releases).
 
 
 ## Variables
@@ -123,7 +123,7 @@ settings:                                     # (Optional) Root configuration bl
 ```hcl
 # terragrunt.hcl
 terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
 }
 
 inputs = {
@@ -171,7 +171,7 @@ inputs = {
 ```hcl
 # terragrunt.hcl
 terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
 }
 
 inputs = {
@@ -213,7 +213,7 @@ Store simple string configuration values with automatic path construction.
 ```hcl
 # terragrunt.hcl
 terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
 }
 
 inputs = {
@@ -254,7 +254,7 @@ Encrypt sensitive parameters using a KMS alias shared across all `SecureString` 
 ```hcl
 # terragrunt.hcl
 terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
 }
 
 inputs = {
@@ -297,7 +297,7 @@ Use `name_override` for full path control and a dedicated KMS key for one parame
 ```hcl
 # terragrunt.hcl
 terraform {
-  source = "git::https://github.com/cloudopsworks/terraform-module-ssm-parameter-store.git?ref=v1.0.0"
+  source = "git::https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store.git?ref=v1.0.0"
 }
 
 inputs = {
@@ -343,11 +343,7 @@ Available targets:
   help                                Help screen
   help/all                            Display help for all targets
   help/short                          This help short screen
-  init/aws                            Initialize the project for a specific cloud provider: AWS
-  init/azurerm                        Initialize the project for a specific cloud provider: Azure RM
-  init/gcp                            Initialize the project for a specific cloud provider: GCP
-  init/github                         Initialize the project for a specific cloud provider: Github Provider
-  init/mongodb                        Initialize the project for a specific cloud provider: MongoDB Atlas Provider
+  init/%                              Initialize the project for a specific cloud provider: %S
   lint                                Lint terraform/opentofu code
   tag                                 Tag the current version
 
@@ -401,7 +397,7 @@ Available targets:
 
 **Got a question?** We got answers. 
 
-File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/issues), send us an [email][email] or join our [Slack Community][slack].
+File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/issues), send us an [email][email] or join our [Slack Community][slack].
 
 
 ## DevOps Tools
@@ -417,7 +413,7 @@ File a GitHub [issue](https://github.com/cloudopsworks/terraform-module-ssm-para
 
 ### Bug Reports & Feature Requests
 
-Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module-ssm-parameter-store/issues) to report any bugs or file feature requests.
+Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store/issues) to report any bugs or file feature requests.
 
 ### Developing
 
@@ -484,30 +480,30 @@ This project is maintained by [Cloud Ops Works LLC][website].
 [![Beacon][beacon]][website]
 
   [logo]: https://cloudopsworks.co/images/main-logo.png
-  [docs]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=docs
-  [website]: https://cloudopsworks.co?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=website
-  [github]: https://cloudopsworks.co/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=github
-  [jobs]: https://cloudopsworks.co/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=jobs
-  [hire]: https://cloudopsworks.co/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=hire
-  [slack]: https://cloudopsworks.co/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=slack
-  [linkedin]: https://cloudopsworks.co/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=linkedin
-  [x]: https://cloudopsworks.co/x?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=x
-  [testimonial]: https://cloudopsworks.co/case-studies?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=testimonial
-  [office_hours]: https://cloudopsworks.co/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=office_hours
-  [newsletter]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=newsletter
-  [email]: https://cloudopsworks.co/contact?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=email
-  [commercial_support]: https://cloudopsworks.co/services?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=commercial_support
-  [we_love_open_source]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=we_love_open_source
-  [terraform_modules]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=terraform_modules
+  [docs]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=docs
+  [website]: https://cloudopsworks.co?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=website
+  [github]: https://cloudopsworks.co/github?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=github
+  [jobs]: https://cloudopsworks.co/jobs?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=jobs
+  [hire]: https://cloudopsworks.co/hire?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=hire
+  [slack]: https://cloudopsworks.co/slack?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=slack
+  [linkedin]: https://cloudopsworks.co/linkedin?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=linkedin
+  [x]: https://cloudopsworks.co/x?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=x
+  [testimonial]: https://cloudopsworks.co/case-studies?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=testimonial
+  [office_hours]: https://cloudopsworks.co/office-hours?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=office_hours
+  [newsletter]: https://cloudopsworks.co/resources?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=newsletter
+  [email]: https://cloudopsworks.co/contact?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=email
+  [commercial_support]: https://cloudopsworks.co/services?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=commercial_support
+  [we_love_open_source]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=we_love_open_source
+  [terraform_modules]: https://cloudopsworks.co/open-source?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=terraform_modules
   [readme_header_img]: https://cloudopsworks.co/images/readme-header.png
-  [readme_header_link]: https://cloudopsworks.co/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_header_link
+  [readme_header_link]: https://cloudopsworks.co/readme/header/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=readme_header_link
   [readme_footer_img]: https://cloudopsworks.co/images/main-logo-footer.png
-  [readme_footer_link]: https://cloudopsworks.co/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_footer_link
+  [readme_footer_link]: https://cloudopsworks.co/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=readme_footer_link
   [readme_commercial_support_img]: https://cloudopsworks.co/readme/commercial-support/img
-  [readme_commercial_support_link]: https://cloudopsworks.co/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-ssm-parameter-store&utm_content=readme_commercial_support_link
-  [share_twitter]: https://x.com/intent/tweet/?text=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
-  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
-  [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
-  [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
-  [share_email]: mailto:?subject=Terraform+AWS+SSM+Parameter+Store+Module&body=https://github.com/cloudopsworks/terraform-module-ssm-parameter-store
-  [beacon]: https://ga-beacon.cloudospworks.co/G-QMZVYYN2VN/cloudopsworks/terraform-module-ssm-parameter-store?pixel&cs=github&cm=readme&an=terraform-module-ssm-parameter-store
+  [readme_commercial_support_link]: https://cloudopsworks.co/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-ssm-parameter-store&utm_content=readme_commercial_support_link
+  [share_twitter]: https://x.com/intent/tweet/?text=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store
+  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+AWS+SSM+Parameter+Store+Module&url=https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store
+  [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store
+  [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store
+  [share_email]: mailto:?subject=Terraform+AWS+SSM+Parameter+Store+Module&body=https://github.com/cloudopsworks/terraform-module-aws-ssm-parameter-store
+  [beacon]: https://ga-beacon.cloudospworks.co/G-QMZVYYN2VN/cloudopsworks/terraform-module-aws-ssm-parameter-store?pixel&cs=github&cm=readme&an=terraform-module-aws-ssm-parameter-store
